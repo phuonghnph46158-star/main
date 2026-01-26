@@ -2,7 +2,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Booking; 
+use App\Models\Booking;   
+  
+
 // use App\Models\Tour; // Mở comment này nếu bạn đã có Model Tour
 
 class BookingController extends Controller
@@ -58,3 +60,5 @@ class BookingController extends Controller
         return redirect()->route('home')->with('success', 'Đặt tour thành công! Chúng tôi sẽ liên hệ sớm nhất.');
     }
 }
+
+// test comment
