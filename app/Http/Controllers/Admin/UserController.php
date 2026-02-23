@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -8,58 +9,71 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    /**
+     * Danh sách user
+     */
     public function index()
     {
-        $users = User::latest()->paginate(10);
+        $users = User::latest()->get();
+
         return view('admin.users.index', compact('users'));
     }
 
-    public function create()
-    {
-        return view('admin.users.create');
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6'
-        ]);
-
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password)
-        ]);
-
-        return redirect()->route('users.index')->with('success', 'Thêm user thành công');
-    }
-
+    /**
+     * Form chỉnh sửa user
+     */
     public function edit(User $user)
     {
         return view('admin.users.edit', compact('user'));
     }
 
+    /**
+     * Cập nhật user
+     */
     public function update(Request $request, User $user)
     {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email,' . $user->id
+        $data = $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email,' . $user->id,
+            'phone'    => 'nullable|string|max:20',
+            'role'     => 'required|in:user,admin',
+            'status'   => 'required|in:active,blocked',
+            'password' => 'nullable|min:6',
         ]);
 
-        $data = $request->only('name', 'email');
-        if ($request->password) {
-            $data['password'] = Hash::make($request->password);
+        // Nếu có nhập mật khẩu mới → mã hoá
+        if (!empty($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
         }
 
         $user->update($data);
-        return redirect()->route('users.index')->with('success', 'Cập nhật thành công');
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'Cập nhật người dùng thành công');
     }
 
+    /**
+     * Xoá user
+     */
     public function destroy(User $user)
     {
+        // Không cho xoá admin
+        if ($user->role === 'admin') {
+            return back()->with('error', 'Không thể xoá tài khoản admin');
+        }
+
+        // Không cho tự xoá chính mình
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'Không thể xoá tài khoản đang đăng nhập');
+        }
+
         $user->delete();
-        return back()->with('success', 'Đã xóa');
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'Xoá người dùng thành công');
     }
 }

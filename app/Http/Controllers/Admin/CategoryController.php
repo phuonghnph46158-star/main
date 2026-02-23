@@ -1,8 +1,9 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Models\TourCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -10,49 +11,66 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::latest()->paginate(10);
+        $categories = TourCategory::with('parent')->latest()->get();
         return view('admin.categories.index', compact('categories'));
     }
 
     public function create()
     {
-        return view('admin.categories.create');
+        $parents = TourCategory::whereNull('parent_id')->get();
+        return view('admin.categories.create', compact('parents'));
     }
 
     public function store(Request $request)
     {
-        $request->validate(['name' => 'required']);
-
-        Category::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'status' => $request->status ?? 1
+        $request->validate([
+            'name' => 'required|string|max:255',
         ]);
 
-        return redirect()->route('categories.index')->with('success', 'Thêm danh mục thành công');
+        TourCategory::create([
+            'name' => $request->name,
+            'slug' => Str::slug($request->name),
+            'parent_id' => $request->parent_id,
+            'description' => $request->description,
+            'status' => $request->status ?? 'active',
+        ]);
+
+        return redirect()->route('admin.categories.index')
+            ->with('success', 'Thêm danh mục thành công');
     }
 
-    public function edit(Category $category)
+    public function edit(TourCategory $category)
     {
-        return view('admin.categories.edit', compact('category'));
+        $parents = TourCategory::whereNull('parent_id')
+            ->where('id', '!=', $category->id)
+            ->get();
+
+        return view('admin.categories.edit', compact('category', 'parents'));
     }
 
-    public function update(Request $request, Category $category)
+    public function update(Request $request, TourCategory $category)
     {
-        $request->validate(['name' => 'required']);
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
 
         $category->update([
             'name' => $request->name,
             'slug' => Str::slug($request->name),
-            'status' => $request->status
+            'parent_id' => $request->parent_id,
+            'description' => $request->description,
+            'status' => $request->status,
         ]);
 
-        return redirect()->route('categories.index')->with('success', 'Cập nhật thành công');
+        return redirect()->route('admin.categories.index')
+            ->with('success', 'Cập nhật thành công');
     }
 
-    public function destroy(Category $category)
+    public function destroy(TourCategory $category)
     {
         $category->delete();
-        return back()->with('success', 'Đã xóa');
+
+        return redirect()->route('admin.categories.index')
+            ->with('success', 'Xoá thành công');
     }
 }

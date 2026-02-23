@@ -45,27 +45,27 @@ Route::post('/booking/store', [BookingController::class, 'store'])->name('bookin
 |--------------------------------------------------------------------------
 */
 
-// Đăng nhập & Đăng xuất Admin
-Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('admin.login');
-Route::post('/admin/login', [AuthController::class, 'login']);
-Route::post('/admin/logout', function () {
-    auth()->logout();
-    return redirect()->route('home');
-})->name('admin.logout');
 
-// Nhóm Admin được bảo vệ bằng middleware 'auth'
-Route::middleware('auth')->prefix('admin')->group(function () {
-    // Dashboard
-    Route::get('/', function() {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+Route::prefix('admin')->name('admin.')->group(function () {
 
-    // Quản lý đơn đặt hàng
-    Route::get('/bookings', [BookingController::class, 'index'])->name('admin.bookings');
+    /* ========= AUTH ADMIN ========= */
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Resources (Danh mục, Tour, User, Guide)
-    Route::resource('categories', CategoryController::class);
-    Route::resource('tours', TourController::class);
-    Route::resource('users', UserController::class);
-    Route::resource('guides', GuideController::class);
+    /* ========= ADMIN AREA ========= */
+    Route::middleware('auth')->group(function () {
+
+        Route::get('/', function () {
+            return view('admin.dashboard');
+        })->name('dashboard');
+
+        /* ========= CRUD ========= */
+        Route::resource('categories', CategoryController::class);
+        Route::resource('tours', TourController::class);
+        Route::resource('users', UserController::class);
+        // ✅ QUẢN LÝ HƯỚNG DẪN VIÊN
+        Route::resource('guides', GuideController::class);
+    });
 });
+ // comment moi
