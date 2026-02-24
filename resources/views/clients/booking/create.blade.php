@@ -1,94 +1,94 @@
 @extends('layouts.client')
 
-@section('title', 'Đặt Tour - TravelGo')
+@section('content') 
+<div class="max-w-4xl mx-auto py-16 px-4">
+    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col md:flex-row">
+        {{-- THÔNG TIN TOUR --}}
+        <div class="md:w-1/3 bg-slate-900 text-white p-8">
+            {{-- ĐÃ FIX: Logic lấy ảnh thông minh từ bảng Tours hoặc bảng phụ --}}
+            @php 
+                $tourImage = $selectedTour->image; // Lấy từ cột image mới thêm vào bảng tours
+                if (!$tourImage) {
+                    $mainImg = $selectedTour->images->where('is_main', 1)->first() ?? $selectedTour->images->first();
+                    $tourImage = $mainImg ? $mainImg->image : null;
+                }
+                $finalImageUrl = $tourImage ? asset('storage/' . $tourImage) : 'https://images.unsplash.com/photo-1503220317375-aaad61436b1b?q=80&w=800';
+            @endphp
 
-@section('content') {{-- Đã sửa từ 'nội dung' thành 'content' để khớp với layout --}}
-<section class="bg-slate-50 py-16">
-    <div class="max-w-5xl mx-auto px-4">
-        <h1 class="text-3xl font-bold text-slate-800 mb-8">Thông tin đặt tour</h1>
-        
-        <form action="{{ route('booking.store') }}" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            @csrf
-            {{-- Thêm input ẩn để gửi ID tour về server --}}
-            <input type="hidden" name="tour_id" value="{{ $selectedTour['id'] ?? '' }}">
-
-            <div class="lg:col-span-2 space-y-6">
-                {{-- Form thông tin liên lạc --}}
-                <div class="bg-white p-8 rounded-3xl shadow-sm border">
-                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                        <i class="fas fa-user-circle text-blue-600"></i> Thông tin liên lạc
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-sm font-semibold">Họ và tên *</label>
-                            <input type="text" name="customer_name" required class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm font-semibold">Số điện thoại *</label>
-                            <input type="text" name="customer_phone" required class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div class="md:col-span-2 space-y-2">
-                            <label class="text-sm font-semibold">Email *</label>
-                            <input type="email" name="customer_email" required class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div class="md:col-span-2 space-y-2">
-                            <label class="text-sm font-semibold">Ghi chú thêm</label>
-                            <textarea name="note" rows="3" class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Số lượng hành khách --}}
-                <div class="bg-white p-8 rounded-3xl shadow-sm border">
-                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                        <i class="fas fa-users text-blue-600"></i> Số lượng hành khách
-                    </h2>
-                    <div class="flex items-center gap-8">
-                        <div class="flex-1 space-y-2">
-                            <label class="text-sm font-semibold">Người lớn</label>
-                            <input type="number" name="adults" value="1" min="1" class="w-full px-4 py-3 rounded-xl border outline-none">
-                        </div>
-                        <div class="flex-1 space-y-2">
-                            <label class="text-sm font-semibold">Trẻ em (Dưới 12 tuổi)</label>
-                            <input type="number" name="children" value="0" min="0" class="w-full px-4 py-3 rounded-xl border outline-none">
-                        </div>
-                    </div>
-                </div>
+            <img src="{{ $finalImageUrl }}" 
+                 class="rounded-2xl mb-6 h-40 w-full object-cover shadow-lg" 
+                 onerror="this.src='https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=800'">
+            
+            <h2 class="text-2xl font-bold mb-2">{{ $selectedTour->name }}</h2>
+            <div class="flex items-center gap-2 text-orange-400 text-sm mb-4">
+                <i class="fas fa-map-marker-alt"></i> 
+                {{ $selectedTour->category->name ?? 'Điểm đến hấp dẫn' }}
             </div>
+            <p class="text-blue-400 text-2xl font-black">{{ number_format($selectedTour->price, 0, ',', '.') }}<span class="text-sm ml-1">đ</span></p>
+            <p class="text-slate-400 text-xs mt-4 italic">* Giá đã bao gồm thuế và phí dịch vụ</p>
+        </div>
 
-            {{-- Tóm tắt chuyến đi (PHẦN QUAN TRỌNG ĐÃ SỬA) --}}
-            <div class="lg:col-span-1">
-                <div class="bg-white p-6 rounded-3xl shadow-lg border sticky top-24">
-                    <h3 class="text-lg font-bold mb-4">Tóm tắt chuyến đi</h3>
-                    
-                    {{-- Ảnh động --}}
-                    <img src="{{ $selectedTour['image'] }}" class="rounded-2xl mb-4 w-full h-40 object-cover">
-                    
-                    {{-- Tên tour động --}}
-                    <p class="font-bold text-slate-800 mb-2">{{ $selectedTour['name'] }}</p>
-                    
-                    <div class="flex justify-between text-sm mb-2 text-slate-500">
-                        <span>Khởi hành:</span>
-                        <span>{{ date('d/m/Y', strtotime('+3 days')) }}</span> {{-- Giả định khởi hành sau 3 ngày --}}
+        {{-- FORM ĐẶT TOUR --}}
+        <div class="md:w-2/3 p-8">
+            <h3 class="text-2xl font-bold mb-6 text-slate-800">Thông tin liên hệ</h3>
+            
+            {{-- Hiển thị thông báo lỗi nếu có --}}
+            @if ($errors->any())
+                <div class="mb-4 p-4 bg-red-50 text-red-600 rounded-xl text-sm">
+                    @foreach ($errors->all() as $error)
+                        <p>• {{ $error }}</p>
+                    @endforeach
+                </div>
+            @endif
+
+            <form action="{{ route('booking.store') }}" method="POST" class="space-y-4">
+                @csrf
+                {{-- Các trường ẩn để khớp với Database --}}
+                <input type="hidden" name="tour_id" value="{{ $selectedTour->id }}">
+                <input type="hidden" name="total_price" value="{{ $selectedTour->price }}"> {{-- Đổi tên cho khớp với Controller thường dùng --}}
+                
+                {{-- Bổ sung trip_id mặc định --}}
+                <input type="hidden" name="trip_id" value="{{ $selectedTour->trips->first()->id ?? 1 }}">
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Họ và tên</label>
+                    <input type="text" name="customer_name" class="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Nguyễn Văn A" required>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Số điện thoại</label>
+                        <input type="text" name="customer_phone" class="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="0901234xxx" required>
                     </div>
-                    
-                    <hr class="my-4">
-                    
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="font-bold">Tổng cộng:</span>
-                        {{-- Giá động --}}
-                        <span class="text-2xl font-bold text-blue-600">
-                            {{ number_format($selectedTour['price'], 0, ',', '.') }}đ
-                        </span>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Số người đi</label>
+                        <input type="number" name="quantity" min="1" value="1" class="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition" required>
                     </div>
-                    
-                    <button type="submit" class="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-2xl shadow-lg transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Ngày khởi hành</label>
+                    <input type="date" name="departure_date" 
+                           min="{{ date('Y-m-d') }}" 
+                           class="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition" 
+                           required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Email</label>
+                    <input type="email" name="customer_email" class="w-full border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="email@example.com" required>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transform active:scale-95 transition duration-300">
                         XÁC NHẬN ĐẶT TOUR
                     </button>
-                    <p class="text-[10px] text-center mt-4 text-slate-400 italic">Bằng cách nhấn nút này, bạn đồng ý với các điều khoản của TravelGo</p>
+                    <p class="text-center text-slate-400 text-xs mt-4">
+                        Bằng cách nhấn xác nhận, bạn đồng ý với các điều khoản của TravelGo
+                    </p>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</section>
+</div>
 @endsection

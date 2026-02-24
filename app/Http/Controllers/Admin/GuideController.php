@@ -10,7 +10,8 @@ class GuideController extends Controller
 {
     public function index()
     {
-        $guides = Guide::latest()->paginate(10);
+        // SỬA TẠI ĐÂY: Thay latest() bằng orderBy('id', 'desc')
+        $guides = Guide::orderBy('id', 'desc')->paginate(10);
         return view('admin.guides.index', compact('guides'));
     }
 
@@ -24,9 +25,9 @@ class GuideController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
-            'email' => 'nullable|email',
+            'email' => 'required|email|unique:tour_guides,email', // Sửa email thành bắt buộc theo SQL
             'experience' => 'required|integer|min:0',
-            'status' => 'required|boolean',
+            'status' => 'required|in:available,busy,inactive', // Sửa lại cho đúng kiểu ENUM trong SQL
         ]);
 
         Guide::create($data);
@@ -44,9 +45,9 @@ class GuideController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
-            'email' => 'nullable|email',
+            'email' => 'required|email|unique:tour_guides,email,' . $guide->id,
             'experience' => 'required|integer|min:0',
-            'status' => 'required|boolean',
+            'status' => 'required|in:available,busy,inactive',
         ]);
 
         $guide->update($data);
