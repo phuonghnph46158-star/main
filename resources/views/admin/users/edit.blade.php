@@ -1,9 +1,12 @@
 @extends('admin.layout')
 
-@section('page_title','Cập nhật người dùng')
+@section('page_title', 'Cập nhật người dùng')
+
+@section('content')
 
 <form method="POST" action="{{ route('users.update',$user) }}">
-    @csrf @method('PUT')
+    @csrf 
+    @method('PUT')
 
     <div class="mb-3">
         <label>Tên</label>
@@ -23,4 +26,5 @@
     <button class="btn btn-primary">Cập nhật</button>
     <a href="{{ route('users.index') }}" class="btn btn-secondary">Quay lại</a>
 </form>
+
 @endsection

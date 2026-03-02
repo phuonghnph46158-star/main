@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\clients;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tour; // Đừng quên import Model Tour
 use Illuminate\Http\Request;
-
 class HomeController extends Controller
 {
     /**
@@ -12,7 +12,15 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('clients.home');
+        // Lấy 6 tour mới nhất, kèm ảnh và danh mục
+        $tours = Tour::with(['images', 'category'])
+            // Lọc các tour đang hoạt động (dùng whereIn để khớp cả 1 hoặc 'active')
+            ->whereIn('status', ['active', '1']) 
+            ->latest()
+            ->take(6)
+            ->get();
+
+        return view('clients.home', compact('tours'));
     }
 
     /**
