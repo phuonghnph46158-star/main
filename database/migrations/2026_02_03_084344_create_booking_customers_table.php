@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('booking_customers', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('booking_id')->constrained('bookings')->cascadeOnDelete();
+    $table->string('name');
+    $table->enum('gender', ['nam', 'nu']);
+    $table->date('birthdate');
+    $table->string('phone')->nullable();
+    $table->enum('type', ['adult', 'child']);
+});
+
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('booking_customers');
+    }
+};

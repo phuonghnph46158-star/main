@@ -1,60 +1,110 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Booking; 
-// use App\Models\Tour; // Mở comment này nếu bạn đã có Model Tour
+use App\Models\Booking;
+use App\Models\Tour;
 
 class BookingController extends Controller
 {
-    public function create($id)
-{
-    $tours = [
-        1 => [
-            'id' => 1,
-            'name' => 'Tour Phú Quốc 3 Ngày 2 Đêm', 
-            'price' => 4500000, 
-            'image' => 'https://static-images.vnncdn.net/files/publish/2022/7/27/ha-long-bay-1-852.jpg'
-        ],
-        // THÊM TOUR ID SỐ 2 VÀO ĐÂY
-        2 => [
-            'id' => 2,
-            'name' => 'Khám phá kỳ quan Vịnh Hạ Long', 
-            'price' => 2650000, 
-            'image' => 'https://static-images.vnncdn.net/files/publish/2022/7/27/ha-long-bay-1-852.jpg'
-        ],
-        3 => [
-            'id' => 3,
-            'name' => 'Khám phá Đảo Ngọc Phú Quốc - Lặn ngắm san hô', 
-            'price' => 4150000, 
-            'image' => 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7'
-        ],
-        4 => [
-            'id' => 4,
-            'name' => 'Sapa mờ sương: Chinh phục đỉnh Fansipan', 
-            'price' => 2250000, 
-            'image' => 'https://images.unsplash.com/photo-1504457047772-27faf1c00561'
-        ],
-    ];
+    public function index()
+    {
+        $bookings = Booking::with(['tour', 'user'])
+                    ->orderBy('id', 'desc')
+                    ->paginate(10);
+                    
+        return view('admin.bookings.index', compact('bookings'));
+    }
 
-    // Lệnh abort(404) này sẽ chạy nếu $id truyền vào không nằm trong danh sách trên
-    $selectedTour = $tours[$id] ?? abort(404);
+    public function show($id)
+    {
+        $booking = Booking::with(['tour', 'user'])->findOrFail($id);
+        return view('admin.bookings.show', compact('booking'));
+    }
 
-    return view('clients.booking.create', compact('selectedTour'));
-}
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,confirmed,canceled'
+        ]);
 
+        $booking = Booking::findOrFail($id);
+        
+        $booking->update([
+            'status' => $request->status
+        ]);
+
+        return redirect()->back()
+            ->with('success', 'Đã cập nhật trạng thái đơn hàng thành công!');
+    }
+
+    /**
+     * STORE ĐÃ FIX TÍNH TỔNG TIỀN
+     */
     public function store(Request $request)
     {
         $request->validate([
+            'tour_id' => 'required',
+            'quantity' => 'required|integer|min:1',
             'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'required|numeric',
             'customer_email' => 'required|email',
-            'tour_id' => 'required'
+            'customer_phone' => 'required',
+            'departure_date' => 'required|date',
         ]);
 
-        // Lưu dữ liệu thực tế:
-        // Booking::create($request->all());
+        // 🔥 Lấy tour từ database
+        $tour = Tour::findOrFail($request->tour_id);
 
-        return redirect()->route('home')->with('success', 'Đặt tour thành công! Chúng tôi sẽ liên hệ sớm nhất.');
+        $quantity = (int) $request->quantity;
+
+        // 🔥 Tính tổng tiền chuẩn
+        $total_price = $tour->price * $quantity;
+
+        Booking::create([
+            'user_id'        => auth()->id(),
+            'tour_id'        => $tour->id,
+            'trip_id'        => $request->trip_id ?? 1,
+            'quantity'       => $quantity,
+            'total_price'    => $total_price,
+            'status'         => 'pending',
+            'booking_code'   => 'BK-' . strtoupper(uniqid()),
+            'customer_name'  => $request->customer_name,
+            'customer_email' => $request->customer_email,
+            'customer_phone' => $request->customer_phone,
+            'departure_date' => $request->departure_date,
+        ]);
+
+        return redirect()->route('booking.history')
+            ->with('success', 'Đặt tour thành công!');
+    }
+
+    public function history()
+    {
+        $bookings = Booking::where('user_id', auth()->id())
+                    ->with('tour')
+                    ->orderBy('id', 'desc')
+                    ->get();
+                    
+        return view('clients.booking.history', compact('bookings'));
+    }
+
+    public function create($id)
+    {
+        $selectedTour = Tour::find($id);
+
+        if (!$selectedTour) {
+            $tours = [
+                1 => [
+                    'id' => 1,
+                    'name' => 'Tour Phú Quốc 3 Ngày 2 Đêm',
+                    'price' => 4500000,
+                    'image' => 'https://via.placeholder.com/150'
+                ],
+            ];
+            $selectedTour = (object) ($tours[$id] ?? abort(404));
+        }
+
+        return view('clients.booking.create', compact('selectedTour'));
     }
 }

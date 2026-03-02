@@ -11,6 +11,8 @@
         </nav>
 
         <div class="flex items-center gap-2">
+
+
             <a href="{{ route('admin.login') }}" class="px-5 py-2 rounded-full border border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold transition">
                 Đăng nhập
             </a>
